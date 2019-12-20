@@ -68,6 +68,7 @@ func runShell(shellCmd string) {
 }
 
 func bootstrapControlPlane(firstMaster Node) {
+	klog.Infof("Bootstrapping %+v\n", firstMaster)
 	cmd := fmt.Sprintf("skuba node bootstrap --user %s --sudo --target %s %s", firstMaster.User, firstMaster.Target, firstMaster.HostName)
 	runShell(cmd)
 }
@@ -75,6 +76,7 @@ func bootstrapControlPlane(firstMaster Node) {
 func joinNodes(nodes []Node) {
 
 	for _, node := range nodes {
+		klog.Infof("Joining %+v\n", node)
 		cmd := fmt.Sprintf("skuba node join --user %s --sudo --target %s %s", node.User, node.Target, node.HostName)
 		runShell(cmd)
 		time.Sleep(10 * time.Second)
