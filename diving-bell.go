@@ -13,7 +13,7 @@ import (
 	
 )
 
-func main() {
+func initCluster() {
 	// Get current user
 	usr, err := user.Current()
 	if err != nil {
@@ -34,8 +34,9 @@ func main() {
 	if err = cluster.Init(initConfig); err != nil {
 		klog.Fatalf("init failed due to error: %s", err)
 	}
+}
 
-	// Bootstrap the first master
+func bootstrapControlPlane() {
 	bootstrapConfiguration := deployments.BootstrapConfiguration{
 		KubeadmExtraArgs: map[string]string{"ignore-preflight-errors": ""},
 	}
@@ -51,4 +52,9 @@ func main() {
 	if err := bootstrap.Bootstrap(bootstrapConfiguration, d); err != nil {
 		klog.Fatalf("error bootstrapping node: %s", err)
 	}
+}
+
+func main() {
+	initCluster()
+	bootstrapControlPlane()
 }
