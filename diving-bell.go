@@ -17,16 +17,25 @@ import (
 	cluster "github.com/SUSE/skuba/pkg/skuba/actions/cluster/init"
 )
 
-type Node struct {
+type node struct {
 	User     string
 	Target   string
 	HostName string
 }
-type ClusterConfig struct {
+type clusterConfig struct {
 	ClusterName        string
 	ControlPlaneTarget string
-	Managers           []Node
-	Workers            []Node
+	Managers           []node
+	Workers            []node
+}
+
+func newClusterConfig() *clusterConfig {
+	var config clusterConfig
+	reader, _ := os.Open("cluster-config.yaml")
+	buf, _ := ioutil.ReadAll(reader)
+	yaml.Unmarshal(buf, &config)
+
+	return &config
 }
 
 func initCluster(clusterName string, controlPlaneTarget string) {
@@ -38,6 +47,7 @@ func initCluster(clusterName string, controlPlaneTarget string) {
 
 	// Init the cluster
 	klog.Infof("Creating cluster %s\n", clusterName)
+
 	initConfig, err := cluster.NewInitConfiguration(
 		path.Join(usr.HomeDir, clusterName),
 		"",
@@ -69,13 +79,13 @@ func runShell(shellCmd string) {
 	}
 }
 
-func bootstrapControlPlane(firstMaster Node) {
+func bootstrapControlPlane(firstMaster node) {
 	klog.Infof("Bootstrapping %+v\n", firstMaster)
 	cmd := fmt.Sprintf("skuba node bootstrap --user %s --sudo --target %s %s", firstMaster.User, firstMaster.Target, firstMaster.HostName)
 	runShell(cmd)
 }
 
-func joinNodes(nodes []Node) {
+func joinNodes(nodes []node) {
 
 	for _, node := range nodes {
 		klog.Infof("Joining %+v\n", node)
@@ -86,19 +96,16 @@ func joinNodes(nodes []Node) {
 }
 
 func main() {
-	var clusterConfig ClusterConfig
-	reader, _ := os.Open("cluster-config.yaml")
-	buf, _ := ioutil.ReadAll(reader)
-	yaml.Unmarshal(buf, &clusterConfig)
+	config := newClusterConfig()
 
-	klog.Infof("Config %+v\n", clusterConfig)
+	klog.Infof("Config %+v\n", config)
 
-	initCluster(clusterConfig.ClusterName, clusterConfig.ControlPlaneTarget)
-	bootstrapControlPlane(clusterConfig.Managers[0])
+	initCluster(config.ClusterName, config.ControlPlaneTarget)
+	bootstrapControlPlane(config.Managers[0])
 
-	if len(clusterConfig.Managers) > 1 {
-		joinNodes(clusterConfig.Managers[1:len(clusterConfig.Managers)])
+	if len(config.Managers) > 1 {
+		joinNodes(config.Managers[1:len(config.Managers)])
 	}
 
-	joinNodes(clusterConfig.Workers)
+	joinNodes(config.Workers)
 }
