@@ -58,7 +58,13 @@ func bootstrapControlPlane() {
 	runShell("skuba node bootstrap --user sles --sudo --target 10.17.2.0 testing-master-0")
 }
 
+func joinNodes() {
+	runShell("skuba node join --user sles --sudo --target 10.17.3.0 --role worker testing-worker-0")
+	runShell("skuba node join --user sles --sudo --target 10.17.3.1 --role worker testing-worker-1")
+}
+
 func main() {
 	initCluster()
 	bootstrapControlPlane()
+	joinNodes()
 }
