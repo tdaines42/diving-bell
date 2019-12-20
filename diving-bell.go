@@ -2,13 +2,13 @@ package main
 
 import (
 	"bufio"
-	"time"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
@@ -17,9 +17,9 @@ import (
 )
 
 type Node struct {
-	User   string
-	Target string
-	HostName   string
+	User     string
+	Target   string
+	HostName string
 }
 type ClusterConfig struct {
 	ClusterName        string
