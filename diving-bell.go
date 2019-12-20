@@ -61,6 +61,7 @@ func initCluster(clusterName string, controlPlaneTarget string) {
 	if err = cluster.Init(initConfig); err != nil {
 		klog.Fatalf("init failed due to error: %s", err)
 	}
+	klog.Infoln()
 }
 
 func runShell(shellCmd string) {
@@ -77,20 +78,21 @@ func runShell(shellCmd string) {
 	for scanner.Scan() {
 		klog.Infoln(scanner.Text())
 	}
+	klog.Infoln()
 }
 
 func bootstrapControlPlane(firstMaster node) {
-	klog.Infof("Bootstrapping %+v\n", firstMaster)
+	klog.Infof("Bootstrapping %s %s\n", firstMaster.HostName, firstMaster.Target)
 	cmd := fmt.Sprintf("skuba node bootstrap --user %s --sudo --target %s %s", firstMaster.User, firstMaster.Target, firstMaster.HostName)
 	runShell(cmd)
 }
 
-func joinNodes(nodes []node) {
+func joinNodes(nodes []node, role string) {
 
 	for _, node := range nodes {
-		nodep := &node
-		klog.Infof("Joining %+v\n", nodep)
-		cmd := fmt.Sprintf("skuba node join --user %s --sudo --target %s %s", nodep.User, nodep.Target, nodep.HostName)
+		node := node
+		klog.Infof("Joining %s %s\n", node.HostName, node.Target)
+		cmd := fmt.Sprintf("skuba node join --role %s --user %s --sudo --target %s %s", role, node.User, node.Target, node.HostName)
 		runShell(cmd)
 		time.Sleep(10 * time.Second)
 	}
@@ -99,14 +101,12 @@ func joinNodes(nodes []node) {
 func main() {
 	config := newClusterConfig()
 
-	klog.Infof("Config %+v\n", config)
-
 	initCluster(config.ClusterName, config.ControlPlaneTarget)
 	bootstrapControlPlane(config.Managers[0])
 
 	if len(config.Managers) > 1 {
-		joinNodes(config.Managers[1:len(config.Managers)])
+		joinNodes(config.Managers[1:len(config.Managers)], "master")
 	}
 
-	joinNodes(config.Workers)
+	joinNodes(config.Workers, "worker")
 }
