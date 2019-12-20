@@ -2,17 +2,33 @@ package main
 
 import (
 	"bufio"
+	"time"
 	"fmt"
-	"strings"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"os/user"
+	"strings"
 
+	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
 
 	cluster "github.com/SUSE/skuba/pkg/skuba/actions/cluster/init"
 )
 
-func initCluster() {
+type Node struct {
+	User   string
+	Target string
+	HostName   string
+}
+type ClusterConfig struct {
+	ClusterName        string
+	ControlPlaneTarget string
+	Managers           []Node
+	Workers            []Node
+}
+
+func initCluster(clusterName string, controlPlaneTarget string) {
 	// Get current user
 	usr, err := user.Current()
 	if err != nil {
@@ -21,9 +37,9 @@ func initCluster() {
 
 	// Init the cluster
 	initConfig, err := cluster.NewInitConfiguration(
-		fmt.Sprintf("%s/test-cluster", usr.HomeDir),
+		fmt.Sprintf("%s/%s", usr.HomeDir, clusterName),
 		"",
-		"10.17.1.0",
+		controlPlaneTarget,
 		"",
 		false)
 	if err != nil {
@@ -44,24 +60,39 @@ func runShell(shellCmd string) {
 		klog.Fatal(err)
 	}
 	cmd.Start()
-	
+
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		klog.Infoln(scanner.Text())
 	}
 }
 
-func bootstrapControlPlane() {
-	runShell("skuba node bootstrap --user sles --sudo --target 10.17.2.0 testing-master-0")
+func bootstrapControlPlane(firstMaster Node) {
+	cmd := fmt.Sprintf("skuba node bootstrap --user %s --sudo --target %s %s", firstMaster.User, firstMaster.Target, firstMaster.HostName)
+	runShell(cmd)
 }
 
-func joinNodes() {
-	runShell("skuba node join --user sles --sudo --target 10.17.3.0 --role worker testing-worker-0")
-	runShell("skuba node join --user sles --sudo --target 10.17.3.1 --role worker testing-worker-1")
+func joinNodes(nodes []Node) {
+
+	for _, node := range nodes {
+		cmd := fmt.Sprintf("skuba node join --user %s --sudo --target %s %s", node.User, node.Target, node.HostName)
+		runShell(cmd)
+		time.Sleep(10 * time.Second)
+	}
 }
 
 func main() {
-	initCluster()
-	bootstrapControlPlane()
-	joinNodes()
+	var clusterConfig ClusterConfig
+	reader, _ := os.Open("cluster-config.yaml")
+	buf, _ := ioutil.ReadAll(reader)
+	yaml.Unmarshal(buf, &clusterConfig)
+
+	initCluster(clusterConfig.ClusterName, clusterConfig.ControlPlaneTarget)
+	bootstrapControlPlane(clusterConfig.Managers[0])
+
+	if len(clusterConfig.Managers) > 1 {
+		joinNodes(clusterConfig.Managers[1:len(clusterConfig.Managers)])
+	}
+
+	joinNodes(clusterConfig.Workers)
 }
