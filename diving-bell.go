@@ -20,11 +20,11 @@ import (
 type node struct {
 	User     string
 	Target   string
-	HostName string
+	HostName string `yaml:"hostName"`
 }
 type clusterConfig struct {
-	ClusterName        string
-	ControlPlaneTarget string
+	ClusterName        string `yaml:"clusterName"`
+	ControlPlaneTarget string `yaml:"controlPlaneTarget"`
 	Managers           []node
 	Workers            []node
 }
