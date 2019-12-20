@@ -45,12 +45,9 @@ func runShell(shellCmd string) {
 	}
 	cmd.Start()
 	
-	reader := bufio.NewReader(stdout)
-	num := 1
-	for {
-		line, _, _ := reader.ReadLine()
-		num++
-		klog.Infoln(string(line))
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		klog.Infoln(scanner.Text())
 	}
 }
 
