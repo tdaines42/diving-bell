@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path"
 	"strings"
 	"time"
 
@@ -36,9 +37,9 @@ func initCluster(clusterName string, controlPlaneTarget string) {
 	}
 
 	// Init the cluster
-	klog.Infof("Creating cluster %+v\n", clusterName)
+	klog.Infof("Creating cluster %s\n", clusterName)
 	initConfig, err := cluster.NewInitConfiguration(
-		fmt.Sprintf("%s/%s", usr.HomeDir, clusterName),
+		path.Join(usr.HomeDir, clusterName),
 		"",
 		controlPlaneTarget,
 		"",
