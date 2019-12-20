@@ -39,7 +39,12 @@ func main() {
 	bootstrapConfiguration := deployments.BootstrapConfiguration{
 		KubeadmExtraArgs: map[string]string{"ignore-preflight-errors": ""},
 	}
+
 	target := ssh.Target{}
+	target.user = "sles"
+	target.targetName = "10.17.2.0"
+	target.sudo = true
+	target.port = 22
 
 	role := deployments.MasterRole
 	d := target.GetDeployment("testing-master-0", &role)
