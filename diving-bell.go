@@ -36,6 +36,7 @@ func initCluster(clusterName string, controlPlaneTarget string) {
 	}
 
 	// Init the cluster
+	klog.Infof("Creating cluster %+v\n", clusterName)
 	initConfig, err := cluster.NewInitConfiguration(
 		fmt.Sprintf("%s/%s", usr.HomeDir, clusterName),
 		"",
