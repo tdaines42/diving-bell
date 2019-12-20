@@ -2,15 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
 	"os/user"
 
 	"k8s.io/klog"
 
-	"github.com/SUSE/skuba/pkg/skuba/actions/node/bootstrap"
-	"github.com/SUSE/skuba/internal/pkg/skuba/deployments"
-	"github.com/SUSE/skuba/internal/pkg/skuba/deployments/ssh"
 	cluster "github.com/SUSE/skuba/pkg/skuba/actions/cluster/init"
-	
 )
 
 func initCluster() {
@@ -37,21 +34,11 @@ func initCluster() {
 }
 
 func bootstrapControlPlane() {
-	bootstrapConfiguration := deployments.BootstrapConfiguration{
-		KubeadmExtraArgs: map[string]string{"ignore-preflight-errors": ""},
+	out, err := exec.Command("skuba", "node", "bootstrap", "--user", "sles", "--sudo", "--target", "10.17.2.0", "testing-master-0").Output()
+	if err != nil {
+		klog.Fatal(err)
 	}
-
-	target := ssh.Target{}
-	target.user = "sles"
-	target.targetName = "10.17.2.0"
-	target.sudo = true
-	target.port = 22
-
-	role := deployments.MasterRole
-	d := target.GetDeployment("testing-master-0", &role)
-	if err := bootstrap.Bootstrap(bootstrapConfiguration, d); err != nil {
-		klog.Fatalf("error bootstrapping node: %s", err)
-	}
+	klog.Info(out)
 }
 
 func main() {
