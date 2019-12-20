@@ -90,6 +90,8 @@ func main() {
 	buf, _ := ioutil.ReadAll(reader)
 	yaml.Unmarshal(buf, &clusterConfig)
 
+	klog.Infof("Config %+v\n", clusterConfig)
+
 	initCluster(clusterConfig.ClusterName, clusterConfig.ControlPlaneTarget)
 	bootstrapControlPlane(clusterConfig.Managers[0])
 
