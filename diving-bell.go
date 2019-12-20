@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"strings"
 	"os/exec"
 	"os/user"
 
@@ -33,12 +35,27 @@ func initCluster() {
 	}
 }
 
-func bootstrapControlPlane() {
-	out, err := exec.Command("skuba", "node", "bootstrap", "--user", "sles", "--sudo", "--target", "10.17.2.0", "testing-master-0").Output()
+func runShell(shellCmd string) {
+	args := strings.Fields(shellCmd)
+	cmd := exec.Command(args[0], args[1:len(args)]...)
+
+	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		klog.Fatal(err)
 	}
-	klog.Info(out)
+	cmd.Start()
+	
+	reader := bufio.NewReader(stdout)
+	num := 1
+	for {
+		line, _, _ := reader.ReadLine()
+		num++
+		klog.Infoln(string(line))
+	}
+}
+
+func bootstrapControlPlane() {
+	runShell("skuba node bootstrap --user sles --sudo --target 10.17.2.0 testing-master-0")
 }
 
 func main() {
