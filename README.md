@@ -1,10 +1,19 @@
 # diving-bell
 
+## Usage
+
+    Deploy a k8s cluster with one command
+
+    Usage:
+      diving-bell [flags]
+
+    Flags:
+          --config string   config file (default is $HOME/.diving-bell.yaml)
+      -h, --help            help for diving-bell
+
 ## Config
 
-The config file `cluster-config.yaml` is currently expected to be in the folder you run `diving-bell` from.
-
-Example config for a cluster:
+Example config for a cluster at `$HOME/.diving-bell.yaml`:
 
     clusterName: "test-cluster"
     controlPlaneTarget: "10.17.1.0"
