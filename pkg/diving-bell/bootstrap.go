@@ -1,17 +1,14 @@
 package divingbell
 
 import (
-	"bufio"
 	"fmt"
-	"os/exec"
 	"os/user"
 	"path"
-	"strings"
-	"time"
 
 	"k8s.io/klog"
 
 	cluster "github.com/SUSE/skuba/pkg/skuba/actions/cluster/init"
+	"github.com/tdaines42/diving-bell/internal/pkg/util"
 )
 
 func initCluster(clusterName string, controlPlaneTarget string) {
@@ -40,49 +37,47 @@ func initCluster(clusterName string, controlPlaneTarget string) {
 	klog.Infoln()
 }
 
-func runShell(shellCmd string) {
-	args := strings.Fields(shellCmd)
-	cmd := exec.Command(args[0], args[1:len(args)]...)
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		klog.Fatal(err)
-	}
-	cmd.Start()
-
-	scanner := bufio.NewScanner(stdout)
-	for scanner.Scan() {
-		klog.Infoln(scanner.Text())
-	}
-	klog.Infoln()
-}
-
-func bootstrapControlPlane(firstMaster clusterNode) {
+func bootstrapControlPlane(firstMaster clusterNode, clusterName string) {
 	klog.Infof("Bootstrapping %s %s\n", firstMaster.HostName, firstMaster.Target)
 	cmd := fmt.Sprintf("skuba node bootstrap --user %s --sudo --target %s %s", firstMaster.User, firstMaster.Target, firstMaster.HostName)
-	runShell(cmd)
+	if util.RunShell(cmd) != true {
+		klog.Fatalln("Failed to bootstrap the first master!")
+	}
+
+	CheckClusterReady(clusterName)
 }
 
-func joinNodes(nodes []clusterNode, role string) {
-
-	for _, node := range nodes {
-		node := node
-		klog.Infof("Joining %s %s\n", node.HostName, node.Target)
-		cmd := fmt.Sprintf("skuba node join --role %s --user %s --sudo --target %s %s", role, node.User, node.Target, node.HostName)
-		runShell(cmd)
-		time.Sleep(10 * time.Second)
+func joinNode(node clusterNode, role string) {
+	klog.Infof("Joining %s %s\n", node.HostName, node.Target)
+	cmd := fmt.Sprintf("skuba node join --role %s --user %s --sudo --target %s %s", role, node.User, node.Target, node.HostName)
+	if util.RunShell(cmd) != true {
+		klog.Fatalf("Failed to join %s to the cluster!\n", node.HostName)
 	}
+}
+
+func joinManagers(nodes []clusterNode, clusterName string) {
+	for _, node := range nodes {
+		joinNode(node, "master")
+		CheckClusterReady(clusterName)
+	}
+}
+
+func joinWorkers(nodes []clusterNode, clusterName string) {
+	for _, node := range nodes {
+		joinNode(node, "worker")
+	}
+
+	CheckClusterReady(clusterName)
 }
 
 // BootstrapCluster Uses the config to bootstrap the cluster
 func BootstrapCluster(config ClusterConfig) {
-
 	initCluster(config.ClusterName, config.ControlPlaneTarget)
-	bootstrapControlPlane(config.Managers[0])
+	bootstrapControlPlane(config.Managers[0], config.ClusterName)
 
 	if len(config.Managers) > 1 {
-		joinNodes(config.Managers[1:len(config.Managers)], "master")
+		joinManagers(config.Managers[1:len(config.Managers)], config.ClusterName)
 	}
 
-	joinNodes(config.Workers, "worker")
+	joinWorkers(config.Workers, config.ClusterName)
 }
