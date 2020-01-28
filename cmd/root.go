@@ -7,8 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog"
-
-	divingbell "github.com/tdaines42/diving-bell/pkg/diving-bell"
 )
 
 var cfgFile string
@@ -20,16 +18,16 @@ var rootCmd = &cobra.Command{
 	Long:  ``,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	Run: func(cmd *cobra.Command, args []string) {
-		var config divingbell.ClusterConfig
+	// Run: func(cmd *cobra.Command, args []string) {
+	// 	var config divingbell.ClusterConfig
 
-		err := viper.Unmarshal(&config)
-		if err != nil {
-			klog.Fatalf("unable to decode into struct, %v", err)
-		}
+	// 	err := viper.Unmarshal(&config)
+	// 	if err != nil {
+	// 		klog.Fatalf("unable to decode into struct, %v", err)
+	// 	}
 
-		divingbell.BootstrapCluster(config)
-	},
+	// 	divingbell.BootstrapCluster(config)
+	// },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
