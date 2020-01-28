@@ -8,7 +8,10 @@ import (
 	divingbell "github.com/tdaines42/diving-bell/pkg/diving-bell"
 )
 
+var redeploy bool
+
 func init() {
+	deployCmd.Flags().BoolVar(&redeploy, "redeploy", false, "Destroy a cluster and deploy it again")
 	rootCmd.AddCommand(deployCmd)
 }
 
@@ -21,15 +24,18 @@ var deployCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var config divingbell.ClusterConfig
 
-		divingbell.UpdateClusterConfig(args[0], args[1]) // Write the initial config
-		divingbell.ProvisionCluster(viper.GetString("terraformWorkspacePath"))
-		divingbell.UpdateClusterConfig(args[0], args[1]) // Update the config with node info
+		if redeploy {
+			divingbell.DeProvisionCluster(args[1])
+		}
+
+		divingbell.ProvisionCluster(args[1])
+		divingbell.UpdateClusterConfig(args[0], args[1])
 
 		err := viper.Unmarshal(&config)
 		if err != nil {
 			klog.Fatalf("unable to decode into struct, %v", err)
 		}
 
-		divingbell.BootstrapCluster(config)
+		divingbell.BootstrapCluster(config, redeploy)
 	},
 }

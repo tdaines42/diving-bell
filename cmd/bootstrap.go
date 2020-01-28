@@ -24,6 +24,6 @@ var bootstrapCmd = &cobra.Command{
 			klog.Fatalf("unable to decode into struct, %v", err)
 		}
 
-		divingbell.BootstrapCluster(config)
+		divingbell.BootstrapCluster(config, false)
 	},
 }

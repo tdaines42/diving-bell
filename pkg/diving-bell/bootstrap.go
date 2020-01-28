@@ -12,7 +12,7 @@ import (
 	"github.com/tdaines42/diving-bell/internal/pkg/util"
 )
 
-func initCluster(clusterName string, controlPlaneTarget string) {
+func initCluster(clusterName string, controlPlaneTarget string, destroy bool) {
 	// Get current user
 	usr, err := user.Current()
 	if err != nil {
@@ -21,10 +21,13 @@ func initCluster(clusterName string, controlPlaneTarget string) {
 
 	clusterConfigDir := path.Join(usr.HomeDir, clusterName)
 
-	_, statErr := os.Stat(clusterConfigDir)
-	if statErr == nil {
-		os.RemoveAll(clusterConfigDir)
+	if destroy {
+		_, statErr := os.Stat(clusterConfigDir)
+		if statErr == nil {
+			os.RemoveAll(clusterConfigDir)
+		}
 	}
+
 	// Init the cluster
 	klog.Infof("Creating cluster %s\n", clusterName)
 
@@ -78,8 +81,8 @@ func joinWorkers(nodes []clusterNode, clusterName string) {
 }
 
 // BootstrapCluster Uses the config to bootstrap the cluster
-func BootstrapCluster(config ClusterConfig) {
-	initCluster(config.ClusterName, config.ControlPlaneTarget)
+func BootstrapCluster(config ClusterConfig, destroy bool) {
+	initCluster(config.ClusterName, config.ControlPlaneTarget, destroy)
 	bootstrapControlPlane(config.Managers[0], config.ClusterName)
 
 	if len(config.Managers) > 1 {
