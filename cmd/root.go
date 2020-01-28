@@ -14,7 +14,7 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "diving-bell",
-	Short: "Deploy a k8s cluster with one command",
+	Short: "Manage a k8s cluster using kubectl, terraform, and skuba",
 	Long:  ``,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
