@@ -17,6 +17,7 @@ Example config for a cluster at `$HOME/.diving-bell.yaml`:
 
     clusterName: "test-cluster"
     controlPlaneTarget: "10.17.1.0"
+    terraformWorkspacePath: "~/github/skuba/ci/infra/libvirt"
     managers:
             - user: "sles"
               target: "10.17.2.0"
