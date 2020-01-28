@@ -2,7 +2,7 @@
 
 ## Usage
 
-    Deploy a k8s cluster with one command
+    Manage a k8s cluster using kubectl, terraform, and skuba
 
     Usage:
       diving-bell [command]
@@ -10,6 +10,7 @@
     Available Commands:
       bootstrap   Bootstrap the cluster using skuba
       config      Print the config to the console
+      deploy      Deploy a cluster with one command
       help        Help about any command
       provision   Provision the cluster using terraform
       status      Get the current status of the cluster
@@ -17,6 +18,8 @@
     Flags:
           --config string   config file (default is $HOME/.diving-bell.yaml)
       -h, --help            help for diving-bell
+
+    Use "diving-bell [command] --help" for more information about a command.`
 
 ## Config
 
