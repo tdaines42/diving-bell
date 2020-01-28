@@ -2,6 +2,7 @@ package divingbell
 
 import (
 	"fmt"
+	"os"
 	"os/user"
 	"path"
 
@@ -18,11 +19,17 @@ func initCluster(clusterName string, controlPlaneTarget string) {
 		klog.Fatalf("getting current user failed: %s", err)
 	}
 
+	clusterConfigDir := path.Join(usr.HomeDir, clusterName)
+
+	_, statErr := os.Stat(clusterConfigDir)
+	if statErr == nil {
+		os.RemoveAll(clusterConfigDir)
+	}
 	// Init the cluster
 	klog.Infof("Creating cluster %s\n", clusterName)
 
 	initConfig, err := cluster.NewInitConfiguration(
-		path.Join(usr.HomeDir, clusterName),
+		clusterConfigDir,
 		"",
 		controlPlaneTarget,
 		"",
