@@ -2,6 +2,7 @@ package divingbell
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/spf13/viper"
 	"k8s.io/klog"
@@ -53,7 +54,7 @@ type terraformOutput struct {
 // GenerateClusterConfig generate a struct of the cluster config
 func GenerateClusterConfig(clusterName string, terraformWorkspacePath string) *ClusterConfig {
 	var clusterConfig ClusterConfig
-	clusterNodes := clusterNodesFromTerraform(terraformWorkspacePath)
+	clusterNodes := clusterNodesFromTerraform(clusterName, terraformWorkspacePath)
 
 	clusterConfig.ClusterName = clusterName
 	clusterConfig.ControlPlaneTarget = clusterNodes.LoadBalancer
@@ -66,8 +67,10 @@ func GenerateClusterConfig(clusterName string, terraformWorkspacePath string) *C
 
 // UpdateClusterConfig update the config file
 func UpdateClusterConfig(clusterName string, terraformWorkspacePath string) {
-	clusterNodes := clusterNodesFromTerraform(viper.GetString("terraformWorkspacePath"))
+	clusterNodes := clusterNodesFromTerraform(clusterName, terraformWorkspacePath)
 
+	viper.Set("clusterName", clusterName)
+	viper.Set("terraformWorkspacePath", terraformWorkspacePath)
 	viper.Set("controlPlaneTarget", clusterNodes.LoadBalancer)
 	viper.Set("managers", clusterNodes.Managers)
 	viper.Set("workers", clusterNodes.Workers)
@@ -75,7 +78,7 @@ func UpdateClusterConfig(clusterName string, terraformWorkspacePath string) {
 }
 
 // ClusterNodesFromTerraform get cluster nodes from terraform output
-func clusterNodesFromTerraform(terraformWorkspacePath string) *ClusterNodes {
+func clusterNodesFromTerraform(clusterName string, terraformWorkspacePath string) *ClusterNodes {
 	var tOutput terraformOutput
 	var clusterNodes ClusterNodes
 
@@ -88,13 +91,29 @@ func clusterNodesFromTerraform(terraformWorkspacePath string) *ClusterNodes {
 	json.Unmarshal([]byte(outputResults.Output), &tOutput)
 	clusterNodes.LoadBalancer = tOutput.IPLoadBalancer.Value
 
-	for i := 0; i < len(tOutput.IPMasters.Value) && i < len(tOutput.HostnameMasters.Value); i++ {
-		node := clusterNode{User: "sles", Target: tOutput.IPMasters.Value[i], HostName: tOutput.HostnameMasters.Value[i]}
+	for i := 0; i < len(tOutput.IPMasters.Value); i++ {
+		var nodeName string
+
+		if i < len(tOutput.HostnameMasters.Value) {
+			nodeName = tOutput.HostnameMasters.Value[i]
+		} else {
+			nodeName = fmt.Sprintf("%s-master-%d", clusterName, i)
+		}
+
+		node := clusterNode{User: "sles", Target: tOutput.IPMasters.Value[i], HostName: nodeName}
 		clusterNodes.Managers = append(clusterNodes.Managers, node)
 	}
 
-	for i := 0; i < len(tOutput.IPWorkers.Value) && i < len(tOutput.HostnameWorkers.Value); i++ {
-		node := clusterNode{User: "sles", Target: tOutput.IPWorkers.Value[i], HostName: tOutput.HostnameWorkers.Value[i]}
+	for i := 0; i < len(tOutput.IPWorkers.Value); i++ {
+		var nodeName string
+
+		if i < len(tOutput.HostnameWorkers.Value) {
+			nodeName = tOutput.HostnameWorkers.Value[i]
+		} else {
+			nodeName = fmt.Sprintf("%s-worker-%d", clusterName, i)
+		}
+
+		node := clusterNode{User: "sles", Target: tOutput.IPWorkers.Value[i], HostName: nodeName}
 		clusterNodes.Workers = append(clusterNodes.Workers, node)
 	}
 
