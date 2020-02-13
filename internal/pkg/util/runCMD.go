@@ -16,6 +16,7 @@ import (
 type CmdResults struct {
 	ExitCode int
 	Output   string
+	Error    error
 }
 
 func pathExpansion(filePath string) string {
@@ -52,6 +53,16 @@ func RunShell(shellCmd string) bool {
 	klog.Infoln()
 
 	return cmd.ProcessState.ExitCode() == 0
+}
+
+// RunShellOutput run a shell command and get the output
+func RunShellOutput(shellCmd string) CmdResults {
+	args := strings.Fields(shellCmd)
+	cmd := exec.Command(args[0], args[1:len(args)]...)
+
+	out, err := cmd.Output()
+
+	return CmdResults{ExitCode: cmd.ProcessState.ExitCode(), Output: string(out), Error: err}
 }
 
 // RunShellAt run a shell command at a given location

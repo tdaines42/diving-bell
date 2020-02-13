@@ -2,8 +2,12 @@ package divingbell
 
 import (
 	"encoding/json"
+	"fmt"
+	"os/user"
+	"path"
 
 	"github.com/spf13/viper"
+	yaml "gopkg.in/yaml.v2"
 	"k8s.io/klog"
 
 	"github.com/tdaines42/diving-bell/internal/pkg/util"
@@ -43,21 +47,52 @@ type terraformOutput struct {
 	IPWorkers      outputMap `json:"ip_workers"`
 }
 
-// GenerateClusterConfig generate a struct of the cluster config
-func GenerateClusterConfig(clusterName string, terraformWorkspacePath string) *ClusterConfig {
-	var clusterConfig ClusterConfig
-	clusterNodes := clusterNodesFromTerraform(clusterName, terraformWorkspacePath)
+// ClusterConfigYamlString generate a string of the config
+func ClusterConfigYamlString(clusterName string, terraformWorkspacePath string) string {
+	UpdateClusterConfig(clusterName, terraformWorkspacePath)
 
-	clusterConfig.ClusterName = clusterName
-	clusterConfig.ControlPlaneTarget = clusterNodes.LoadBalancer
-	clusterConfig.TerraformWorkspacePath = terraformWorkspacePath
-	clusterConfig.Managers = clusterNodes.Managers
-	clusterConfig.Workers = clusterNodes.Workers
+	bs, err := yaml.Marshal(viper.AllSettings())
+	if err != nil {
+		klog.Fatalf("unable to marshal config to YAML: %v", err)
+	}
 
-	return &clusterConfig
+	return string(bs)
 }
 
-// UpdateClusterConfig update the config file
+// RetrieveClusterConfig retrieve the config from the cluster
+func RetrieveClusterConfig(clusterName string) {
+	usr, err := user.Current()
+	if err != nil {
+		klog.Fatalf("getting current user failed: %s", err)
+	}
+
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s get configmap diving-bell -o jsonpath='{.data.\\.diving-bell\\.yaml}'", path.Join(usr.HomeDir, clusterName, "admin.conf"))
+	out := util.RunShellOutput(cmd)
+	if out.Error != nil {
+		klog.Fatalln(out.Error)
+	}
+	fmt.Println(out.Output[1 : len(out.Output)-1])
+}
+
+// StoreClusterConfig store the config in the cluster as a config map
+func StoreClusterConfig(clusterName string, terraformWorkspacePath string) {
+	usr, err := user.Current()
+	if err != nil {
+		klog.Fatalf("getting current user failed: %s", err)
+	}
+
+	UpdateClusterConfigFile(clusterName, terraformWorkspacePath)
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", path.Join(usr.HomeDir, clusterName, "admin.conf"))
+	util.RunShellOutput(cmd)
+	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", path.Join(usr.HomeDir, clusterName, "admin.conf"), viper.ConfigFileUsed())
+	out := util.RunShellOutput(cmd)
+
+	if out.Error != nil {
+		klog.Fatalln(out.Error)
+	}
+}
+
+// UpdateClusterConfig update the config
 func UpdateClusterConfig(clusterName string, terraformWorkspacePath string) {
 	clusterNodes := clusterNodesFromTerraform(clusterName, terraformWorkspacePath)
 
@@ -66,6 +101,11 @@ func UpdateClusterConfig(clusterName string, terraformWorkspacePath string) {
 	viper.Set("controlPlaneTarget", clusterNodes.LoadBalancer)
 	viper.Set("managers", clusterNodes.Managers)
 	viper.Set("workers", clusterNodes.Workers)
+}
+
+// UpdateClusterConfigFile update the config file
+func UpdateClusterConfigFile(clusterName string, terraformWorkspacePath string) {
+	UpdateClusterConfig(clusterName, terraformWorkspacePath)
 	viper.WriteConfig()
 }
 
