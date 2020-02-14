@@ -29,7 +29,7 @@ var deployCmd = &cobra.Command{
 		}
 
 		divingbell.ProvisionCluster(args[1])
-		divingbell.UpdateClusterConfig(args[0], args[1])
+		divingbell.UpdateClusterConfigFile(args[0], args[1])
 
 		err := viper.Unmarshal(&config)
 		if err != nil {
@@ -37,5 +37,6 @@ var deployCmd = &cobra.Command{
 		}
 
 		divingbell.BootstrapCluster(config, redeploy)
+		divingbell.StoreClusterConfig(args[0], args[1])
 	},
 }
