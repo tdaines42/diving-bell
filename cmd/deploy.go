@@ -37,6 +37,6 @@ var deployCmd = &cobra.Command{
 		}
 
 		divingbell.BootstrapCluster(config, redeploy)
-		divingbell.StoreClusterConfig(args[0], args[1])
+		divingbell.StoreClusterConfig(args[0])
 	},
 }

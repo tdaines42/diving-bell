@@ -75,13 +75,12 @@ func RetrieveClusterConfig(clusterName string) {
 }
 
 // StoreClusterConfig store the config in the cluster as a config map
-func StoreClusterConfig(clusterName string, terraformWorkspacePath string) {
+func StoreClusterConfig(clusterName string) {
 	usr, err := user.Current()
 	if err != nil {
 		klog.Fatalf("getting current user failed: %s", err)
 	}
 
-	UpdateClusterConfigFile(clusterName, terraformWorkspacePath)
 	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", path.Join(usr.HomeDir, clusterName, "admin.conf"))
 	util.RunShellOutput(cmd)
 	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", path.Join(usr.HomeDir, clusterName, "admin.conf"), viper.ConfigFileUsed())

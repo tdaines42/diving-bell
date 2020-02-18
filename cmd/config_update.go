@@ -7,15 +7,15 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(provisionCmd)
+	configCmd.AddCommand(configUpdateCmd)
 }
 
-var provisionCmd = &cobra.Command{
-	Use:   "provision [terraform workspace path]",
-	Short: "Provision the cluster using terraform",
+var configUpdateCmd = &cobra.Command{
+	Use:   "update [cluster name]",
+	Short: "Updates the config in the cluster",
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		divingbell.ProvisionCluster(args[0])
+		divingbell.StoreClusterConfig(args[0])
 	},
 }
