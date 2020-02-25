@@ -23,6 +23,7 @@ type clusterNode struct {
 type ClusterConfig struct {
 	ClusterName            string `yaml:"clusterName"`
 	ControlPlaneTarget     string `yaml:"controlPlaneTarget"`
+	KubernetesVersion      string `yaml:"kubernetesVersion"`
 	TerraformWorkspacePath string `yaml:"terraformWorkspacePath"`
 	Managers               []clusterNode
 	Workers                []clusterNode
@@ -48,8 +49,8 @@ type terraformOutput struct {
 }
 
 // ClusterConfigYamlString generate a string of the config
-func ClusterConfigYamlString(clusterName string, terraformWorkspacePath string) string {
-	UpdateClusterConfig(clusterName, terraformWorkspacePath)
+func ClusterConfigYamlString(clusterName string, kubernetesVersion string, terraformWorkspacePath string) string {
+	UpdateClusterConfig(clusterName, kubernetesVersion, terraformWorkspacePath)
 
 	bs, err := yaml.Marshal(viper.AllSettings())
 	if err != nil {
@@ -92,10 +93,11 @@ func StoreClusterConfig(clusterName string) {
 }
 
 // UpdateClusterConfig update the config
-func UpdateClusterConfig(clusterName string, terraformWorkspacePath string) {
+func UpdateClusterConfig(clusterName string, kubernetesVersion string, terraformWorkspacePath string) {
 	clusterNodes := clusterNodesFromTerraform(clusterName, terraformWorkspacePath)
 
 	viper.Set("clusterName", clusterName)
+	viper.Set("kubernetesVersion", kubernetesVersion)
 	viper.Set("terraformWorkspacePath", terraformWorkspacePath)
 	viper.Set("controlPlaneTarget", clusterNodes.LoadBalancer)
 	viper.Set("managers", clusterNodes.Managers)
@@ -103,8 +105,8 @@ func UpdateClusterConfig(clusterName string, terraformWorkspacePath string) {
 }
 
 // UpdateClusterConfigFile update the config file
-func UpdateClusterConfigFile(clusterName string, terraformWorkspacePath string) {
-	UpdateClusterConfig(clusterName, terraformWorkspacePath)
+func UpdateClusterConfigFile(clusterName string, kubernetesVersion string, terraformWorkspacePath string) {
+	UpdateClusterConfig(clusterName, kubernetesVersion, terraformWorkspacePath)
 	viper.WriteConfig()
 }
 

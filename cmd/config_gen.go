@@ -12,6 +12,7 @@ var write bool
 
 func init() {
 	configGenCmd.Flags().BoolVar(&write, "write", false, "Write the config to the local file")
+	configGenCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", "", "Which version of kubernetes to use. Defaults to skuba latest")
 	configCmd.AddCommand(configGenCmd)
 }
 
@@ -21,10 +22,13 @@ var configGenCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
+		clusterName := args[0]
+		terraformWorkspacePath := args[1]
+
 		if write {
-			divingbell.UpdateClusterConfigFile(args[0], args[1])
+			divingbell.UpdateClusterConfigFile(clusterName, kubernetesVersion, terraformWorkspacePath)
 		} else {
-			fmt.Println(divingbell.ClusterConfigYamlString(args[0], args[1]))
+			fmt.Println(divingbell.ClusterConfigYamlString(clusterName, kubernetesVersion, terraformWorkspacePath))
 		}
 	},
 }

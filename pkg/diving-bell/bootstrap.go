@@ -12,7 +12,7 @@ import (
 	"github.com/tdaines42/diving-bell/internal/pkg/util"
 )
 
-func initCluster(clusterName string, controlPlaneTarget string, destroy bool) {
+func initCluster(clusterName string, controlPlaneTarget string, kubernetesVersion string, destroy bool) {
 	// Get current user
 	usr, err := user.Current()
 	if err != nil {
@@ -35,7 +35,7 @@ func initCluster(clusterName string, controlPlaneTarget string, destroy bool) {
 		clusterConfigDir,
 		"",
 		controlPlaneTarget,
-		"",
+		kubernetesVersion,
 		false)
 	if err != nil {
 		klog.Fatalf("init failed due to error: %s", err)
@@ -82,7 +82,7 @@ func joinWorkers(nodes []clusterNode, clusterName string) {
 
 // BootstrapCluster Uses the config to bootstrap the cluster
 func BootstrapCluster(config ClusterConfig, destroy bool) {
-	initCluster(config.ClusterName, config.ControlPlaneTarget, destroy)
+	initCluster(config.ClusterName, config.ControlPlaneTarget, config.KubernetesVersion, destroy)
 	bootstrapControlPlane(config.Managers[0], config.ClusterName)
 
 	if len(config.Managers) > 1 {

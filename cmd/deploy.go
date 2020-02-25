@@ -12,6 +12,7 @@ var redeploy bool
 
 func init() {
 	deployCmd.Flags().BoolVar(&redeploy, "redeploy", false, "Destroy a cluster and deploy it again")
+	deployCmd.Flags().StringVar(&kubernetesVersion, "kubernetes-version", "", "Which version of kubernetes to use. Defaults to skuba latest")
 	rootCmd.AddCommand(deployCmd)
 }
 
@@ -23,13 +24,15 @@ var deployCmd = &cobra.Command{
 	Args: cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		var config divingbell.ClusterConfig
+		clusterName := args[0]
+		terraformWorkspacePath := args[1]
 
 		if redeploy {
-			divingbell.DeProvisionCluster(args[1])
+			divingbell.DeProvisionCluster(terraformWorkspacePath)
 		}
 
-		divingbell.ProvisionCluster(args[1])
-		divingbell.UpdateClusterConfigFile(args[0], args[1])
+		divingbell.ProvisionCluster(terraformWorkspacePath)
+		divingbell.UpdateClusterConfigFile(clusterName, kubernetesVersion, terraformWorkspacePath)
 
 		err := viper.Unmarshal(&config)
 		if err != nil {
@@ -37,6 +40,6 @@ var deployCmd = &cobra.Command{
 		}
 
 		divingbell.BootstrapCluster(config, redeploy)
-		divingbell.StoreClusterConfig(args[0])
+		divingbell.StoreClusterConfig(clusterName)
 	},
 }
