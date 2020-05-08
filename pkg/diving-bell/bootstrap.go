@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"k8s.io/klog"
 
@@ -82,6 +83,7 @@ func createInitialCluster(firstMaster clusterNode, firstWorker clusterNode, clus
 	bootstrapControlPlane(firstMaster, clusterName)
 	joinNode(firstWorker, "worker")
 
+	time.Sleep(5 * time.Second)
 	CheckClusterReady(clusterName)
 }
 
