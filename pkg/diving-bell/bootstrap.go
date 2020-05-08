@@ -53,8 +53,6 @@ func bootstrapControlPlane(firstMaster clusterNode, clusterName string) {
 	if util.RunShell(cmd) != true {
 		klog.Fatalln("Failed to bootstrap the first master!")
 	}
-
-	CheckClusterReady(clusterName)
 }
 
 func joinNode(node clusterNode, role string) {
@@ -80,14 +78,24 @@ func joinWorkers(nodes []clusterNode, clusterName string) {
 	CheckClusterReady(clusterName)
 }
 
+func createInitialCluster(firstMaster clusterNode, firstWorker clusterNode, clusterName string) {
+	bootstrapControlPlane(firstMaster, clusterName)
+	joinNode(firstWorker, "worker")
+
+	CheckClusterReady(clusterName)
+}
+
 // BootstrapCluster Uses the config to bootstrap the cluster
 func BootstrapCluster(config ClusterConfig, destroy bool) {
 	initCluster(config.ClusterName, config.ControlPlaneTarget, config.KubernetesVersion, destroy)
-	bootstrapControlPlane(config.Managers[0], config.ClusterName)
+	createInitialCluster(config.Managers[0], config.Workers[0], config.ClusterName)
 
+	// Join additional nodes
 	if len(config.Managers) > 1 {
 		joinManagers(config.Managers[1:len(config.Managers)], config.ClusterName)
 	}
 
-	joinWorkers(config.Workers, config.ClusterName)
+	if len(config.Workers) > 1 {
+		joinWorkers(config.Workers[1:len(config.Workers)], config.ClusterName)
+	}
 }
