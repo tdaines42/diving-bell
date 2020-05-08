@@ -4,7 +4,6 @@ require (
 	github.com/SUSE/skuba v1.3.4
 	github.com/coreos/go-oidc v2.1.0+incompatible
 	github.com/go-logfmt/logfmt v0.4.0 // indirect
-	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pkg/errors v0.8.1
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/spf13/cobra v1.0.0

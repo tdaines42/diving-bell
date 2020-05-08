@@ -3,7 +3,7 @@ package divingbell
 import (
 	"encoding/json"
 	"fmt"
-	"os/user"
+	"os"
 	"path"
 
 	"github.com/spf13/viper"
@@ -62,12 +62,14 @@ func ClusterConfigYamlString(clusterName string, kubernetesVersion string, terra
 
 // RetrieveClusterConfig retrieve the config from the cluster
 func RetrieveClusterConfig(clusterName string) {
-	usr, err := user.Current()
+	// Find current working directory.
+	cwd, err := os.Getwd()
 	if err != nil {
-		klog.Fatalf("getting current user failed: %s", err)
+		klog.Errorln(err)
+		os.Exit(1)
 	}
 
-	cmd := fmt.Sprintf("kubectl --kubeconfig=%s get configmap diving-bell -o jsonpath='{.data.\\.diving-bell\\.yaml}'", path.Join(usr.HomeDir, clusterName, "admin.conf"))
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s get configmap diving-bell -o jsonpath='{.data.\\.diving-bell\\.yaml}'", path.Join(cwd, clusterName, "admin.conf"))
 	out := util.RunShellOutput(cmd)
 	if out.Error != nil {
 		klog.Fatalln(out.Error)
@@ -77,14 +79,16 @@ func RetrieveClusterConfig(clusterName string) {
 
 // StoreClusterConfig store the config in the cluster as a config map
 func StoreClusterConfig(clusterName string) {
-	usr, err := user.Current()
+	// Find current working directory.
+	cwd, err := os.Getwd()
 	if err != nil {
-		klog.Fatalf("getting current user failed: %s", err)
+		klog.Errorln(err)
+		os.Exit(1)
 	}
 
-	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", path.Join(usr.HomeDir, clusterName, "admin.conf"))
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", path.Join(cwd, clusterName, "admin.conf"))
 	util.RunShellOutput(cmd)
-	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", path.Join(usr.HomeDir, clusterName, "admin.conf"), viper.ConfigFileUsed())
+	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", path.Join(cwd, clusterName, "admin.conf"), viper.ConfigFileUsed())
 	out := util.RunShellOutput(cmd)
 
 	if out.Error != nil {

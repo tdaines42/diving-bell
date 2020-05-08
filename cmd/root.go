@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog"
@@ -46,7 +45,7 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.diving-bell.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is {cwd}/.diving-bell.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -55,15 +54,15 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
+		// Find current working directory.
+		cwd, err := os.Getwd()
 		if err != nil {
 			klog.Errorln(err)
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".diving-bell" (without extension).
-		viper.AddConfigPath(home)
+		// Search config in cwd with name ".diving-bell" (without extension).
+		viper.AddConfigPath(cwd)
 		viper.SetConfigName(".diving-bell")
 	}
 

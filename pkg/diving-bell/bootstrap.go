@@ -3,7 +3,6 @@ package divingbell
 import (
 	"fmt"
 	"os"
-	"os/user"
 	"path"
 
 	"k8s.io/klog"
@@ -13,13 +12,14 @@ import (
 )
 
 func initCluster(clusterName string, controlPlaneTarget string, kubernetesVersion string, destroy bool) {
-	// Get current user
-	usr, err := user.Current()
+	// Find current working directory.
+	cwd, err := os.Getwd()
 	if err != nil {
-		klog.Fatalf("getting current user failed: %s", err)
+		klog.Errorln(err)
+		os.Exit(1)
 	}
 
-	clusterConfigDir := path.Join(usr.HomeDir, clusterName)
+	clusterConfigDir := path.Join(cwd, clusterName)
 
 	if destroy {
 		_, statErr := os.Stat(clusterConfigDir)
