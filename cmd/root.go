@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog"
+
+	"github.com/tdaines42/diving-bell/internal/pkg/util"
 )
 
 var cfgFile string
@@ -19,14 +21,7 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) {
-	// 	var config divingbell.ClusterConfig
-
-	// 	err := viper.Unmarshal(&config)
-	// 	if err != nil {
-	// 		klog.Fatalf("unable to decode into struct, %v", err)
-	// 	}
-
-	// 	divingbell.BootstrapCluster(config)
+	//	
 	// },
 }
 
@@ -46,6 +41,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is {cwd}/.diving-bell.yaml)")
+	rootCmd.PersistentFlags().BoolVar(&util.Debug, "debug", false, "run in debug mode")
 }
 
 // initConfig reads in config file and ENV variables if set.
