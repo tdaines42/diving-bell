@@ -3,8 +3,6 @@ package divingbell
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path"
 
 	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
@@ -61,15 +59,8 @@ func ClusterConfigYamlString(clusterName string, kubernetesVersion string, terra
 }
 
 // RetrieveClusterConfig retrieve the config from the cluster
-func RetrieveClusterConfig(clusterName string) {
-	// Find current working directory.
-	cwd, err := os.Getwd()
-	if err != nil {
-		klog.Errorln(err)
-		os.Exit(1)
-	}
-
-	cmd := fmt.Sprintf("kubectl --kubeconfig=%s get configmap diving-bell -o jsonpath='{.data.\\.diving-bell\\.yaml}'", path.Join(cwd, clusterName, "admin.conf"))
+func RetrieveClusterConfig(kubeconfig string) {
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s get configmap diving-bell -o jsonpath='{.data.\\.diving-bell\\.yaml}'", kubeconfig)
 	out := util.RunShellOutput(cmd)
 	if out.Error != nil {
 		klog.Fatalln(out.Error)
@@ -78,17 +69,10 @@ func RetrieveClusterConfig(clusterName string) {
 }
 
 // StoreClusterConfig store the config in the cluster as a config map
-func StoreClusterConfig(clusterName string) {
-	// Find current working directory.
-	cwd, err := os.Getwd()
-	if err != nil {
-		klog.Errorln(err)
-		os.Exit(1)
-	}
-
-	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", path.Join(cwd, clusterName, "admin.conf"))
+func StoreClusterConfig(kubeconfig string) {
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", kubeconfig)
 	util.RunShellOutput(cmd)
-	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", path.Join(cwd, clusterName, "admin.conf"), viper.ConfigFileUsed())
+	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", kubeconfig, viper.ConfigFileUsed())
 	out := util.RunShellOutput(cmd)
 
 	if out.Error != nil {

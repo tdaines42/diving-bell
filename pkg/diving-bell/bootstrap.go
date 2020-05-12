@@ -12,16 +12,7 @@ import (
 	"github.com/tdaines42/diving-bell/internal/pkg/util"
 )
 
-func initCluster(clusterName string, controlPlaneTarget string, kubernetesVersion string, destroy bool) {
-	// Find current working directory.
-	cwd, err := os.Getwd()
-	if err != nil {
-		klog.Errorln(err)
-		os.Exit(1)
-	}
-
-	clusterConfigDir := path.Join(cwd, clusterName)
-
+func initCluster(clusterConfigDir string, clusterName string, controlPlaneTarget string, kubernetesVersion string, destroy bool) {
 	if destroy {
 		_, statErr := os.Stat(clusterConfigDir)
 		if statErr == nil {
@@ -64,40 +55,42 @@ func joinNode(node clusterNode, role string) {
 	}
 }
 
-func joinManagers(nodes []clusterNode, clusterName string) {
+func joinManagers(nodes []clusterNode, clusterName string, kubeconfig string) {
 	for _, node := range nodes {
 		joinNode(node, "master")
-		CheckClusterReady(clusterName)
+		CheckClusterReady(kubeconfig)
 	}
 }
 
-func joinWorkers(nodes []clusterNode, clusterName string) {
+func joinWorkers(nodes []clusterNode, clusterName string, kubeconfig string) {
 	for _, node := range nodes {
 		joinNode(node, "worker")
 	}
 
-	CheckClusterReady(clusterName)
+	CheckClusterReady(kubeconfig)
 }
 
-func createInitialCluster(firstMaster clusterNode, firstWorker clusterNode, clusterName string) {
+func createInitialCluster(firstMaster clusterNode, firstWorker clusterNode, clusterName string, kubeconfig string) {
 	bootstrapControlPlane(firstMaster, clusterName)
 	joinNode(firstWorker, "worker")
 
 	time.Sleep(5 * time.Second)
-	CheckClusterReady(clusterName)
+	CheckClusterReady(kubeconfig)
 }
 
 // BootstrapCluster Uses the config to bootstrap the cluster
-func BootstrapCluster(config ClusterConfig, destroy bool) {
-	initCluster(config.ClusterName, config.ControlPlaneTarget, config.KubernetesVersion, destroy)
-	createInitialCluster(config.Managers[0], config.Workers[0], config.ClusterName)
+func BootstrapCluster(config ClusterConfig, currentWorkingDir string, destroy bool, kubeconfig string) {
+	clusterConfigDir := path.Join(currentWorkingDir, config.ClusterName)
+
+	initCluster(clusterConfigDir, config.ClusterName, config.ControlPlaneTarget, config.KubernetesVersion, destroy)
+	createInitialCluster(config.Managers[0], config.Workers[0], config.ClusterName, kubeconfig)
 
 	// Join additional nodes
 	if len(config.Managers) > 1 {
-		joinManagers(config.Managers[1:len(config.Managers)], config.ClusterName)
+		joinManagers(config.Managers[1:len(config.Managers)], config.ClusterName, kubeconfig)
 	}
 
 	if len(config.Workers) > 1 {
-		joinWorkers(config.Workers[1:len(config.Workers)], config.ClusterName)
+		joinWorkers(config.Workers[1:len(config.Workers)], config.ClusterName, kubeconfig)
 	}
 }

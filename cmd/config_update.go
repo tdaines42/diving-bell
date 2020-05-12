@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"path"
+
 	"github.com/spf13/cobra"
 
 	divingbell "github.com/tdaines42/diving-bell/pkg/diving-bell"
@@ -16,6 +18,7 @@ var configUpdateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		divingbell.StoreClusterConfig(args[0])
+		kubeconfig := path.Join(currentWorkingDir, args[0], "admin.conf")
+		divingbell.StoreClusterConfig(kubeconfig)
 	},
 }

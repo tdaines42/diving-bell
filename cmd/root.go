@@ -12,6 +12,7 @@ import (
 
 var cfgFile string
 var kubernetesVersion string
+var currentWorkingDir string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -35,6 +36,15 @@ func Execute() {
 }
 
 func init() {
+	// Find current working directory.
+	cwd, err := os.Getwd()
+	if err != nil {
+		klog.Errorln(err)
+		os.Exit(1)
+	}
+
+	currentWorkingDir = cwd
+
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
