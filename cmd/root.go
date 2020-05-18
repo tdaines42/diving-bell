@@ -22,7 +22,7 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) {
-	//	
+	//
 	// },
 }
 
@@ -69,6 +69,7 @@ func initConfig() {
 
 		// Search config in cwd with name ".diving-bell" (without extension).
 		viper.AddConfigPath(cwd)
+		viper.SetConfigType("yaml")
 		viper.SetConfigName(".diving-bell")
 	}
 
@@ -77,5 +78,18 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		klog.Infoln("Using config file:", viper.ConfigFileUsed())
+	} else {
+		// Try to create config file
+		if err := viper.SafeWriteConfig(); err != nil {
+			klog.Fatalln(err)
+		}
+
+		// Read config again
+		if err := viper.ReadInConfig(); err != nil {
+			klog.Fatalln(err)
+		}
+
+		klog.Infoln("Created new config file:", viper.ConfigFileUsed())
 	}
+
 }

@@ -1,6 +1,7 @@
 package divingbell
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -95,6 +96,7 @@ func UpdateClusterConfig(clusterName string, kubernetesVersion string, terraform
 // UpdateClusterConfigFile update the config file
 func UpdateClusterConfigFile(clusterName string, kubernetesVersion string, terraformWorkspacePath string) {
 	UpdateClusterConfig(clusterName, kubernetesVersion, terraformWorkspacePath)
+	klog.Infof("Writing config to %s", viper.ConfigFileUsed())
 	viper.WriteConfig()
 }
 
