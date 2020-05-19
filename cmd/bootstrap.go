@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"path"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog"
@@ -24,6 +26,8 @@ var bootstrapCmd = &cobra.Command{
 			klog.Fatalf("unable to decode into struct, %v", err)
 		}
 
-		divingbell.BootstrapCluster(config, false)
+		kubeconfig := path.Join(currentWorkingDir, viper.GetString("clusterName"), "admin.conf")
+
+		divingbell.BootstrapCluster(config, currentWorkingDir, false, kubeconfig)
 	},
 }

@@ -18,7 +18,7 @@ Diving bell uses kubectl, terraform, and skuba to manage k8s clusters
       status      Get the current status of the cluster
 
     Flags:
-          --config string   config file (default is $HOME/.diving-bell.yaml)
+          --config string   config file (default is {working directory}/.diving-bell.yaml)
       -h, --help            help for diving-bell
 
     Use "diving-bell [command] --help" for more information about a command.
@@ -31,7 +31,7 @@ Diving bell uses kubectl, terraform, and skuba to manage k8s clusters
 
 ### Config
 
-Example config for a cluster at the default location `$HOME/.diving-bell.yaml`:
+Example config for a cluster:
 
     clusterName: "test-cluster"
     controlPlaneTarget: "10.17.1.0"
@@ -69,6 +69,7 @@ Example config for a cluster at the default location `$HOME/.diving-bell.yaml`:
   To provision and bootstrap a cluster with one command you can run `diving-bell deploy [cluster name] [terraform workspace path]`. This use terraform to provision a cluster and skuba to bootstrap it. If a skuba cluster dir with the same cluster name exists this command will fail. You can override that behavior using the `--redeploy` flag. You can also specify the k8s version to use with `--kubernetes-version`.
 
   To do this all one step at a time you would run all these commands
+  
   ```
   diving-bell provision [terraform workspace path]
   diving-bell config gen [cluster name] [terraform workspace path] --write

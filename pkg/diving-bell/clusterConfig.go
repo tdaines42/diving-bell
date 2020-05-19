@@ -1,10 +1,9 @@
 package divingbell
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"os/user"
-	"path"
 
 	"github.com/spf13/viper"
 	yaml "gopkg.in/yaml.v2"
@@ -61,13 +60,8 @@ func ClusterConfigYamlString(clusterName string, kubernetesVersion string, terra
 }
 
 // RetrieveClusterConfig retrieve the config from the cluster
-func RetrieveClusterConfig(clusterName string) {
-	usr, err := user.Current()
-	if err != nil {
-		klog.Fatalf("getting current user failed: %s", err)
-	}
-
-	cmd := fmt.Sprintf("kubectl --kubeconfig=%s get configmap diving-bell -o jsonpath='{.data.\\.diving-bell\\.yaml}'", path.Join(usr.HomeDir, clusterName, "admin.conf"))
+func RetrieveClusterConfig(kubeconfig string) {
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s get configmap diving-bell -o jsonpath='{.data.\\.diving-bell\\.yaml}'", kubeconfig)
 	out := util.RunShellOutput(cmd)
 	if out.Error != nil {
 		klog.Fatalln(out.Error)
@@ -76,15 +70,10 @@ func RetrieveClusterConfig(clusterName string) {
 }
 
 // StoreClusterConfig store the config in the cluster as a config map
-func StoreClusterConfig(clusterName string) {
-	usr, err := user.Current()
-	if err != nil {
-		klog.Fatalf("getting current user failed: %s", err)
-	}
-
-	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", path.Join(usr.HomeDir, clusterName, "admin.conf"))
+func StoreClusterConfig(kubeconfig string) {
+	cmd := fmt.Sprintf("kubectl --kubeconfig=%s delete configmap diving-bell", kubeconfig)
 	util.RunShellOutput(cmd)
-	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", path.Join(usr.HomeDir, clusterName, "admin.conf"), viper.ConfigFileUsed())
+	cmd = fmt.Sprintf("kubectl --kubeconfig=%s create configmap diving-bell --from-file=%s", kubeconfig, viper.ConfigFileUsed())
 	out := util.RunShellOutput(cmd)
 
 	if out.Error != nil {
@@ -107,6 +96,7 @@ func UpdateClusterConfig(clusterName string, kubernetesVersion string, terraform
 // UpdateClusterConfigFile update the config file
 func UpdateClusterConfigFile(clusterName string, kubernetesVersion string, terraformWorkspacePath string) {
 	UpdateClusterConfig(clusterName, kubernetesVersion, terraformWorkspacePath)
+	klog.Infof("Writing config to %s", viper.ConfigFileUsed())
 	viper.WriteConfig()
 }
 

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"path"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -16,6 +18,7 @@ var statusCmd = &cobra.Command{
 	Short: "Get the current status of the cluster",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		divingbell.CheckClusterReady(viper.GetString("clusterName"))
+		kubeconfig := path.Join(currentWorkingDir, viper.GetString("clusterName"), "admin.conf")
+		divingbell.CheckClusterReady(kubeconfig)
 	},
 }

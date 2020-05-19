@@ -3,14 +3,16 @@ package cmd
 import (
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog"
+
+	"github.com/tdaines42/diving-bell/internal/pkg/util"
 )
 
 var cfgFile string
 var kubernetesVersion string
+var currentWorkingDir string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -20,14 +22,7 @@ var rootCmd = &cobra.Command{
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) {
-	// 	var config divingbell.ClusterConfig
-
-	// 	err := viper.Unmarshal(&config)
-	// 	if err != nil {
-	// 		klog.Fatalf("unable to decode into struct, %v", err)
-	// 	}
-
-	// 	divingbell.BootstrapCluster(config)
+	//
 	// },
 }
 
@@ -41,12 +36,22 @@ func Execute() {
 }
 
 func init() {
+	// Find current working directory.
+	cwd, err := os.Getwd()
+	if err != nil {
+		klog.Errorln(err)
+		os.Exit(1)
+	}
+
+	currentWorkingDir = cwd
+
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.diving-bell.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is {cwd}/.diving-bell.yaml)")
+	rootCmd.PersistentFlags().BoolVar(&util.Debug, "debug", false, "run in debug mode")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -55,15 +60,16 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := homedir.Dir()
+		// Find current working directory.
+		cwd, err := os.Getwd()
 		if err != nil {
 			klog.Errorln(err)
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".diving-bell" (without extension).
-		viper.AddConfigPath(home)
+		// Search config in cwd with name ".diving-bell" (without extension).
+		viper.AddConfigPath(cwd)
+		viper.SetConfigType("yaml")
 		viper.SetConfigName(".diving-bell")
 	}
 
@@ -72,5 +78,18 @@ func initConfig() {
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		klog.Infoln("Using config file:", viper.ConfigFileUsed())
+	} else {
+		// Try to create config file
+		if err := viper.SafeWriteConfig(); err != nil {
+			klog.Fatalln(err)
+		}
+
+		// Read config again
+		if err := viper.ReadInConfig(); err != nil {
+			klog.Fatalln(err)
+		}
+
+		klog.Infoln("Created new config file:", viper.ConfigFileUsed())
 	}
+
 }

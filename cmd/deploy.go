@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"path"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/klog"
@@ -26,6 +28,7 @@ var deployCmd = &cobra.Command{
 		var config divingbell.ClusterConfig
 		clusterName := args[0]
 		terraformWorkspacePath := args[1]
+		kubeconfig := path.Join(currentWorkingDir, clusterName, "admin.conf")
 
 		if redeploy {
 			divingbell.DeProvisionCluster(terraformWorkspacePath)
@@ -39,7 +42,7 @@ var deployCmd = &cobra.Command{
 			klog.Fatalf("unable to decode into struct, %v", err)
 		}
 
-		divingbell.BootstrapCluster(config, redeploy)
-		divingbell.StoreClusterConfig(clusterName)
+		divingbell.BootstrapCluster(config, currentWorkingDir, redeploy, kubeconfig)
+		divingbell.StoreClusterConfig(kubeconfig)
 	},
 }

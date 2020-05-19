@@ -19,6 +19,8 @@ type CmdResults struct {
 	Error    error
 }
 
+var Debug bool
+
 func pathExpansion(filePath string) string {
 	usr, err := user.Current()
 	if err != nil {
@@ -41,11 +43,22 @@ func RunShell(shellCmd string) bool {
 	if err != nil {
 		klog.Fatal(err)
 	}
+
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		klog.Fatal(err)
+	}
+
 	cmd.Start()
 
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
 		klog.Infoln(scanner.Text())
+	}
+
+	errScanner := bufio.NewScanner(stderr)
+	for errScanner.Scan() {
+		klog.Warningln(errScanner.Text())
 	}
 
 	cmd.Wait()
