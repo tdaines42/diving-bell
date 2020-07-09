@@ -1,7 +1,6 @@
 package divingbell
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
