@@ -2,25 +2,10 @@ module github.com/tdaines42/diving-bell
 
 require (
 	github.com/SUSE/skuba v1.3.4
-	github.com/coreos/go-oidc v2.1.0+incompatible
-	github.com/go-logfmt/logfmt v0.4.0 // indirect
-	github.com/pkg/errors v0.8.1
-	github.com/pmezard/go-difflib v1.0.0
 	github.com/spf13/cobra v1.0.0
-	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.3
-	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
-	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	gopkg.in/yaml.v2 v2.2.8
-	k8s.io/api v0.17.5
-	k8s.io/apimachinery v0.17.5
-	k8s.io/client-go v0.17.5
-	k8s.io/cluster-bootstrap v0.17.5
 	k8s.io/klog v1.0.0
-	k8s.io/kubectl v0.0.0
-	k8s.io/kubernetes v1.17.5
-	sigs.k8s.io/yaml v1.1.0
 )
 
 replace (
@@ -46,3 +31,5 @@ replace (
 	k8s.io/metrics => k8s.io/metrics v0.17.5
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.17.5
 )
+
+go 1.13
